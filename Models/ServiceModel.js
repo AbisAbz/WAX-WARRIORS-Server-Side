@@ -14,10 +14,6 @@ const serviceSchema = new mongoose.Schema({
         type:Number,
         required:true,
     },
-    Image:{
-     type:Array,
-     required:true,
-    },
     description:{
         type:String,
         required:true,

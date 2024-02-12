@@ -177,7 +177,6 @@ const googlelogin = async(req, res) => {
   try {
     const {email}  = req.body
     const exist = await User.findOne({email:email})
-    console.log("iam the exist email", exist);
     if(exist){
       if(exist.is_google === true){
 

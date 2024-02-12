@@ -1,41 +1,40 @@
-import cloudinary from "cloudinary";
-import { config } from "dotenv";
-import * as fileType from "file-type";
-import { createReadStream } from "fs";
-import { promisify } from "util";
-config();
+const cloudinary = require('cloudinary').v2  //v2 is the version of cloudinary, if you didn't give the version it will automatically take the newest version 
 
 cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET,
+    cloud_name: 'dz3mvjcpj',
+    api_key: '637589351573522',
+    api_secret: 'CbzYabv6Tq0vffxkdc4spbNvYZo',
     secure: true
-});
+})
 
-const uploadToClodinary = async (path, folder) => {
+const uploadToCloudinary = async (path, folder) => {
     try {
-        const data = await cloudinary.v2.uploader.upload(path, { folder })
-        return { url: data.url, public_id: data.public_id }
+        console.log("inside uploadToCloudinary");
+        const data = await cloudinary.uploader.upload(path, { folder });
+        console.log(" iam the data ", data);
+        return { url: data.url, public_id: data.public_id };
     } catch (error) {
-        console.log(error);
+        throw error;
+    }
+}
+
+const multiUploadCloudinary = async (files, folder) => {
+    try {
+        const uploadImages = []
+        for (const file of files) {
+            
+            const { path } = file
+            const result = await uploadToCloudinary(path, folder)
+            if (result) uploadImages.push(result.url)
+        }
+        return uploadImages
+    } catch (error) {
+        console.log("iam the ,ulticloudinary function error ", error);
     }
 }
 
 
-
-
-const readFile = promisify(createReadStream);
-
-export const validateImageFormat = async (path) => {
-    try {
-        const buffer = await readFile(path);
-        const type = fileType(buffer);
-
-        if (!type || !["image/jpeg", "image/png", "image/avif"].includes(type.mime))  throw new Error("Invalid image format");
-        
-    } catch (error) {
-        throw error;
-    }
-};
-
-export default uploadToClodinary;
+module.exports = {
+    uploadToCloudinary,
+    multiUploadCloudinary,
+}

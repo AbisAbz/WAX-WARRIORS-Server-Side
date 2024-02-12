@@ -5,6 +5,18 @@ const userschema = new mongoose.Schema({
         type:String,
         required:true
     },
+    houseName:{
+        type:String,
+        required:false
+    },
+    state:{
+       type:String,
+       required:false
+    },
+    district:{
+         type:String,
+         required:false
+    },
     email:{
         type:String,
         required:true
