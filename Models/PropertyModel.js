@@ -30,6 +30,18 @@ const propertySchema = new mongoose.Schema({
         type:String,
         required:true,
     },
+    openingTime:{
+        type:String,
+        required:true,
+    },
+    closingTime:{
+        type:String,
+        required:true,
+    },
+    avgRating:{
+        type:Number,
+        default: 0,
+    },
     mobile:{
         type:Number,
         required:true,
@@ -40,11 +52,14 @@ const propertySchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        required:true,
     },
     images: {
         type: Array,
       },
+    is_visible:{
+        type:Boolean,
+        default: true,
+    }
 
 })
 

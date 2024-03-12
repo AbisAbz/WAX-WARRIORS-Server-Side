@@ -70,11 +70,11 @@ const PropertyRegistration = async (req, res) => {
   
   
         if (updateUser.modifiedCount > 0) {
-          const userData = await SubAdmin.findOne({ _id: verifyEmail._id });
+          const propOwnerData = await SubAdmin.findOne({ _id: verifyEmail._id });
           const result = await TokenModel.deleteOne({ subAdminId: userData._id });
 
   
-          const propertyToken = jwt.sign(
+          const subAdminToken = jwt.sign(
             { userId: userData._id },
             process.env.SECRET_KEY,
             { expiresIn: '1h' }
@@ -84,7 +84,7 @@ const PropertyRegistration = async (req, res) => {
   
   
           if (result.deletedCount > 0) {
-            return res.status(200).json({ propertyToken, userData, message: 'Successfully Registered your Account' });
+            return res.status(200).json({ subAdminToken, propOwnerData, message: 'Successfully Registered your Account' });
           } else {
             console.log("Not deleted the token of the user");
             return res.status(400).json({ message: 'Internal Server Error' });
@@ -113,13 +113,13 @@ const PropertyRegistration = async (req, res) => {
   
         if (truePass) {
            
-          const propertyToken = jwt.sign(
+          const subAdminToken = jwt.sign(
             { userId: exist._id },
             process.env.SECRET_KEY,
             { expiresIn: '1h' }
             )
             
-          return res.status(200).json({ propertyToken, exist })
+          return res.status(200).json({ subAdminToken, exist })
         } else {
   
           return res.status(400).json({ message: 'Your password is incorrect' })

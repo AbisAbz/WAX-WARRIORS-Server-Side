@@ -14,10 +14,12 @@ const reviewSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    Users: {
+    UsersId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
       },
     
 })
+
+module.exports = mongoose.model('Rating', reviewSchema);
