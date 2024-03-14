@@ -8,13 +8,16 @@ const adminLogin = async(req, res) => {
     try {
         
        const {email, password} = req.body;
+       console.log("hahaha", password);
        const existEmail = await Admin.findOne({email: email})
 
        if(existEmail){
         if(existEmail.is_admin === 1){
            const truePass = await bcrypt.compare(password, existEmail.password)
+           console.log("iam the true pass", truePass);
 
            if(truePass){
+            console.log("kikikiki");
               const adminToken = jwt.sign(
                 {id:existEmail._id},
                 process.env.SECRET_KEY,

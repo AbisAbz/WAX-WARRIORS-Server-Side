@@ -39,7 +39,7 @@ const fetchprophome = async (req, res) => {
     try {
         const { rating, search } = req.body;
 
-        let findData = await Property.find();
+        let findData = await Property.find({status:"approved"});
         let data = findData;
 
         if (rating > 0) {
@@ -301,8 +301,7 @@ const fetchAllAvailableTimes = async(req, res) => {
          let endingTime = moment(closingTime, 'hh:mm A');
          let parsedDate = moment(date, 'DD-MM-YYYY'); 
          let currentDate = moment();
-
-
+         
          if (parsedDate.isSame(currentDate, 'day')) {
             let currentTime = moment().tz('Asia/Kolkata');
             if (startingTime.isSameOrAfter(currentTime, 'hour') && startingTime.isSameOrAfter(currentTime, 'minute')) {

@@ -2,8 +2,7 @@ const { log } = require('util');
 const Property = require('../Models/PropertyModel');
 const Service = require('../Models/ServiceModel');
 const booking = require('../Models/BookingModel');
-const moment = require('moment');
-require('moment-timezone');
+const moment = require('moment-timezone');
 const { uploadToCloudinary, multiUploadCloudinary } = require('../Utils/Cloudinary')
 
 const RegProperty = async (req, res) => {
@@ -167,25 +166,33 @@ const fetchAllDataDash = async (req, res) => {
             const currentMonth = now.month() + 1;
             const currentYear = now.year();
 
-            const months = [currentMonth, currentMonth + 1, currentMonth + 2];
+            const months = [currentMonth - 2, currentMonth - 1, currentMonth ];
 
             const totalRevenueByMonth = months.map(month => {
                 const adjustedMonth = month > 12 ? month - 12 : month;
                 const adjustedYear = month > 12 ? currentYear + 1 : currentYear;
+                console.log("iam month adjustedMonth..", adjustedMonth);
+                console.log("iam month adjustedYear..", adjustedYear);
 
                 const monthDate = moment.tz({ year: adjustedYear, month: adjustedMonth - 1, date: 1 }, 'Asia/Kolkata');
                 const monthName = monthDate.format('MMMM');
+               
 
-                const monthlyRevenue = data
+                const monthlyReve = data
                     .filter(booking => {
-                        const [bookingMonth, bookingYear] = booking.date.split('-').map(Number);
-                        const bookingDateTime = moment.tz(booking.date + ' ' + booking.time, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata');
+                        const [bookingDay,bookingMonth, bookingYear] = booking.date.split('-').map(Number);
+
+                        const bookingDateTime = moment.tz(booking.date + ' ' + booking.time, 'DD-MM-YYYY hh:mm A', 'Asia/Kolkata');
                         return bookingMonth === adjustedMonth && bookingYear === adjustedYear && bookingDateTime.isBefore(now) && booking.bookingStatus === 'success';
                     })
-                    .reduce((total, booking) => total + booking.TotalRate, 0);
+                    .reduce((total, booking) => total + booking.TotalRate, 0)
+                    
+                return { month: monthName, year: adjustedYear, revenue: monthlyReve };
 
-                return { month: monthName, year: adjustedYear, revenue: monthlyRevenue };
             });
+            
+           
+          console.log("jiiljiljiljiljil ", totalRevenueByMonth);
 
             const totalSales = data
                 .filter(booking => {
