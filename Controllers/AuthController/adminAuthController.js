@@ -4,20 +4,17 @@ const bcrypt = require('bcrypt')
 
 
 
-const adminLogin = async(req, res) => {
+const adminLogin = async(req, res, next) => {
     try {
         
        const {email, password} = req.body;
-       console.log("hahaha", password);
        const existEmail = await Admin.findOne({email: email})
 
        if(existEmail){
         if(existEmail.is_admin === 1){
            const truePass = await bcrypt.compare(password, existEmail.password)
-           console.log("iam the true pass", truePass);
 
            if(truePass){
-            console.log("kikikiki");
               const adminToken = jwt.sign(
                 {id:existEmail._id},
                 process.env.SECRET_KEY,
@@ -30,8 +27,8 @@ const adminLogin = async(req, res) => {
        }else  return res.status(400).json({message:'Email is incorrect'});
        
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'Internal Server Error' });
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
 }
 

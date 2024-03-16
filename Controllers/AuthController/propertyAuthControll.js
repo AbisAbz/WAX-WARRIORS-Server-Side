@@ -7,10 +7,8 @@ const crypto = require('crypto')
 const { SecurePassword } = require('../../Utils/SecurePassword')
 
 
-const PropertyRegistration = async (req, res) => {
+const PropertyRegistration = async (req, res, next) => {
     try {
-
-      console.log("finally i reached in propersty Registration");
       const userDetails = req.body;
       const hashedPassword = SecurePassword(userDetails.password)
       const existEmail = SubAdmin.findOne({ email: userDetails.email })
@@ -28,8 +26,6 @@ const PropertyRegistration = async (req, res) => {
         })
   
         const subAdminData = await newSubAdmin.save();
-  
-  
         if (subAdminData) {
   
           const id = subAdminData._id;
@@ -46,17 +42,17 @@ const PropertyRegistration = async (req, res) => {
           return res.status(200).json({ message: 'An email send to your account verify' })
   
         }
-        else console.log("registration failed");
+        else res.status(400).json({ message: '"registration failed"' })
       }
   
     } catch (error) {
-      console.log("i do know what heppent something wrong",error); 
-      return res.status(500).json({ message: 'Internal Server Error' });
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   
   }
 
-  const verifyPropertyOwner = async (req, res) => {
+  const verifyPropertyOwner = async (req, res, next) => {
     try {
       const verifyEmail = await SubAdmin.findOne({ _id: req.params.id });
       const TokenVerify = await TokenModel.findOne({ token: req.params.token, subAdminId: req.params.id });
@@ -86,23 +82,21 @@ const PropertyRegistration = async (req, res) => {
           if (result.deletedCount > 0) {
             return res.status(200).json({ subAdminToken, propOwnerData, message: 'Successfully Registered your Account' });
           } else {
-            console.log("Not deleted the token of the user");
             return res.status(400).json({ message: 'Internal Server Error' });
           }
         } else {
-          console.log("Not updated the verify in the user");
           return res.status(400).json({ message: 'Internal Server Error' });
         }
       }
     } catch (error) {
-      console.log(error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   };
 
 
 
-  const propLogin = async(req,res) => {
+  const propLogin = async(req,res, next) => {
     try {
       const {email, password} = req.body;
        const exist = await SubAdmin.findOne({email:email})
@@ -129,8 +123,8 @@ const PropertyRegistration = async (req, res) => {
       }
   
     } catch (error) {
-      console.log(error);
-      return res.status(400).json({ message: 'Internal Server Error' });
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
     } 
 

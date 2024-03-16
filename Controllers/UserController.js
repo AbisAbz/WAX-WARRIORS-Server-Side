@@ -11,7 +11,7 @@ const { log } = require('util')
 
 
 
-const fetchprophome = async (req, res) => {
+const fetchprophome = async (req, res, next) => {
     try {
   
       const fetchData = await Property.find();
@@ -28,14 +28,14 @@ const fetchprophome = async (req, res) => {
       }
       res.status(200).json({ data: fetchData });
     } catch (error) {
-      console.log(error);
+      next(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   };
   
 
 
-  const fetchProperties = async (req, res) => {
+  const fetchProperties = async (req, res, next) => {
     try {
         const { rating, search } = req.body;
 
@@ -74,14 +74,14 @@ const fetchprophome = async (req, res) => {
             return res.status(200).json({ message: 'No Properties found' , data});
         }
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'Internal server error' });
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
 
 
-const fetchUserDetails = async(req, res) => {
+const fetchUserDetails = async(req, res,next) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if(!token) return res.status(400).json({message:'token expires please login'})
@@ -97,11 +97,12 @@ const fetchUserDetails = async(req, res) => {
 
 
     } catch (error) {
-        console.log(error); 
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" }); 
     }
 }
 
-const updateUserDetails = async(req, res) => {
+const updateUserDetails = async(req, res, next) => {
     try {
         const userDatas = req.body.values
         const userId = await User.findById(req.body.id)
@@ -115,141 +116,67 @@ const updateUserDetails = async(req, res) => {
             }
         
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 
-const fetchAllService = async(req, res) => {
+const fetchAllService = async (req, res, next) => {
     try {
-        const id = req.body.id
+        const id = req.body.id;
+
         const servicePromise = Service.find({ propertyId: id }).exec();
         const ratingPromise = Rating.find({ propertyId: id }).populate('UsersId').exec();
-        const slotBookingsPromise =  Booking.find({ propertyId: id }).exec();
-        const currentPropertyPromise =  Property.findById({ _id: id }).exec();
-        
-        const [serviceData, ratingData, slotBookings, propertyDetails] = await Promise.all([servicePromise, ratingPromise, slotBookingsPromise,currentPropertyPromise]);
+        const slotBookingsPromise = Booking.find({ propertyId: id }).exec();
+        const currentPropertyPromise = Property.findById(id).exec();
 
+        const [serviceData, ratingData, slotBookings, propertyDetails] = await Promise.all([servicePromise, ratingPromise, slotBookingsPromise, currentPropertyPromise]);
 
- const currentDate = new Date()
+        const currentDate = new Date();
 
- const pendingWorks = slotBookings.filter((e) => {
-    const dateTimeString = `${e.date} ${e.time}`;
-    const dateTime = new Date(dateTimeString);
-    return dateTime >= currentDate;
-});
+        const pendingWorks = slotBookings.filter((e) => {
+            const dateTimeString = `${e.date} ${e.time}`;
+            const dateTime = new Date(dateTimeString);
+            return dateTime >= currentDate;
+        });
 
+        const slotNotAvailable = pendingWorks.reduce((acc, e) => {
+            const DateTimeString = `${e.date} ${e.time}`;
+            const DateTime = new Date(DateTimeString);
 
-const slotNotAvailable = pendingWorks.reduce((acc, e) => {
-    const DateTimeString = `${e.date} ${e.time}`;
-    const DateTime = new Date(DateTimeString);
-
-  
-    if (e.checked) {
-        return acc;
-    }
-
-    const count = pendingWorks.reduce((count, k) => {
-        const kDateTimeString = `${k.date} ${k.time}`;
-        const kDateTime = new Date(kDateTimeString);
-
-        if (DateTime.getTime() === kDateTime.getTime()) {
-            k.checked = true;
-            return count + 1;
-        } else {
-            return count;
-        }
-    }, 0);
-
-    if(count >= propertyDetails.slot){
-    acc.push({
-        date: e.date,
-        time: e.time,
-        count: count,
-    });
-}
-
-    return acc;
-}, []);
-
-
-        if(!serviceData){
-            if(!slotNotAvailable){
-            if(!ratingData){
-                const avgRating = 0;
-                return res.status(400).json({avgRating})
-            }else{
-                let sum = 0;
-                let count = 0;
-                
-                ratingData.map((e) => {
-                  sum = sum + e.ReviewRating;
-                  count++;
-                });
-                
-                const avgRating = Math.floor(sum / count);
-                return res.status(200).json({ratingData,avgRating})
+            if (e.checked) {
+                return acc;
             }
-        }else{
-            if(!ratingData){
-                const avgRating = 0;
-                return res.status(400).json({ slotNotAvailable,avgRating })
-            }else{
-                let sum = 0;
-                let count = 0;
-                
-                ratingData.map((e) => {
-                  sum = sum + e.ReviewRating;
-                  count++;
+
+            const count = pendingWorks.filter(k => DateTime.getTime() === new Date(`${k.date} ${k.time}`).getTime()).length;
+
+            if (count >= propertyDetails.slot) {
+                acc.push({
+                    date: e.date,
+                    time: e.time,
+                    count: count,
                 });
-                
-                const avgRating = Math.floor(sum / count);
-                return res.status(200).json({ ratingData, slotNotAvailable, avgRating })
             }
-        }
-    }else{
-        if(!slotNotAvailable){
-            if(!ratingData){
-                const avgRating = 0;
-                return res.status(400).json({avgRating, serviceData})
-            }else{
-                let sum = 0;
-                let count = 0;
-                
-                ratingData.map((e) => {
-                  sum = sum + e.ReviewRating;
-                  count++;
-                });
-                
-                const avgRating = Math.floor(sum / count);
-                return res.status(200).json({ratingData,avgRating, serviceData})
-            }
-        }else{
-            if(!ratingData){
-                const avgRating = 0;
-                return res.status(400).json({ slotNotAvailable,avgRating , serviceData})
-            }else{
-                let sum = 0;
-                let count = 0;
-                
-                ratingData.map((e) => {
-                  sum = sum + e.ReviewRating;
-                  count++;
-                });
-                
-                const avgRating = Math.floor(sum / count);
-                return res.status(200).json({ ratingData, slotNotAvailable, avgRating , serviceData})
-            }
+
+            return acc;
+        }, []);
+
+        let avgRating = 0;
+        if (ratingData && ratingData.length > 0) {
+            const sum = ratingData.reduce((acc, e) => acc + e.ReviewRating, 0);
+            avgRating = Math.floor(sum / ratingData.length);
         }
 
-    }
-
+        return res.status(200).json({ serviceData, ratingData, slotNotAvailable, avgRating });
     } catch (error) {
-    console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
 
-const postRating = async(req, res) => {
+
+const postRating = async(req, res, next) => {
     try {
       const ratingDatas = req.body
         if(!ratingDatas)  return res.status(400).json({message:'Something error occured please rate once more'})
@@ -287,11 +214,12 @@ const postRating = async(req, res) => {
         }
         
     } catch (error) {
-      console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const fetchAllAvailableTimes = async(req, res) => {
+const fetchAllAvailableTimes = async(req, res, next) => {
     try {
         const { date , slot, openingTime, closingTime, propId} = req.body
         const slotAvailabilityChecking = await Booking.find( { date: date  })
@@ -364,12 +292,13 @@ const fetchAllAvailableTimes = async(req, res) => {
         }
         
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 
-const slotBooking = async(req, res) => {
+const slotBooking = async(req, res, next) => {
     try {
               const bookingData = req.body;
               
@@ -420,11 +349,12 @@ const slotBooking = async(req, res) => {
     }
       
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const payementprocedure = async(req, res) => {
+const payementprocedure = async(req, res, next) => {
     try {
         const BookedData = req.body
         const stripe = new Stripe("sk_test_51ODm4bSHaENjV1jroo3TowfdHte8VmCm5hGFP5Llc0Gxzeh5sGAOo6gFGoDjFvFmeWXNLEd0yMOfIXj9KocfnBIO005dT0lJmM")
@@ -449,11 +379,12 @@ const payementprocedure = async(req, res) => {
       }  
 
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const paymentSuccess = async (req, res) => {
+const paymentSuccess = async (req, res, next) => {
     try {
       const isUpdate = await Booking.findOneAndUpdate(
         { _id: req.body.bookingId },
@@ -463,11 +394,12 @@ const paymentSuccess = async (req, res) => {
 
       res.status(200).json({ status: true, message: "update completed" });
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
   };
 
-  const fetchBookedSummary = async(req, res) => {
+  const fetchBookedSummary = async(req, res,next) => {
     try {
         const { active, id } = req.params;
         const page = (active - 1) * 5;
@@ -484,11 +416,12 @@ const paymentSuccess = async (req, res) => {
         const totalPages = Math.ceil(totalBooking / 5);
         return res.status(200).json({ bookingSummeryData, totalPages });
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
-  const fetchSummaryViewData = async(req, res) => {
+  const fetchSummaryViewData = async(req, res, next) => {
     try {
      const { bookingId }   = req.body
      const data = await Booking.findById({_id: bookingId}).populate("propertyId").populate("UsersId")
@@ -496,12 +429,13 @@ const paymentSuccess = async (req, res) => {
 
 
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
   }
 
   
-  const cancelBooking = async(req, res) => {
+  const cancelBooking = async(req, res, next) => {
     try {
         const { bookingId } = req.body
         const updateStatus = await Booking.findOneAndUpdate({_id: bookingId}, {$set:{ bookingStatus: "cancel"}})
@@ -510,7 +444,8 @@ const paymentSuccess = async (req, res) => {
          else return res.status(400).json({message:"Something went wrong "})
 
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
   }
 

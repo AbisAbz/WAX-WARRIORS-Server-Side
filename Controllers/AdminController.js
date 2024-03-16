@@ -5,7 +5,7 @@ const sendEmail = require('../Utils/NodeMailer')
 
 
 
-const userList = async (req, res) => {
+const userList = async (req, res, next) => {
     try {
       const usersResponse = await User.find({ verified: true });
   
@@ -15,13 +15,13 @@ const userList = async (req, res) => {
         return res.status(400).json({ message: 'No users found' });
       }
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Internal Server Error' });
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   };
 
 
-  const userblock = async (req, res) => {
+  const userblock = async (req, res, next) => {
     try {
        const  { id }   = req.body
        const data = await User.findOne({_id:id})
@@ -35,17 +35,16 @@ const userList = async (req, res) => {
        
       
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Internal Server Error' }); 
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
       
     }
   }
 
 
-  const fetchProperty = async(req, res) => {
+  const fetchProperty = async(req, res, next) => {
      try {
         const propData = await Property.find()
-        console.log("hellooo iam in the back-end");
 
         if(!propData) {
         return res.status(400).json({message:'No properties added'});
@@ -62,28 +61,27 @@ const userList = async (req, res) => {
              }
            })
             
-           console.log("iam the filtered propData",filtredPropData);
           return res.status(200).json({filtredPropData})
          }
      } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Internal Server Error' }); 
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" }); 
      }
   }
 
-  const propertyAprove = async(req, res) => {
+  const propertyAprove = async(req, res, next) => {
      try {
        const id = req.body.id
        const response = await Property.updateOne({_id:id},{$set:{status:'approved'}})
-       console.log("iam the respnse of the udating property", response);
          return res.status(200).json({message:'successfully updated'})
   
      } catch (error) {
-      return res.status(500).json({ message: 'Internal Server Error' }); 
+      next(error);
+      res.status(500).json({ error: "Internal Server Error" });
      }
   }
 
-const rejectMail = async(req, res) => {
+const rejectMail = async(req, res, next) => {
   try {
   const { id, rejectionReason } = req.body
   const response = await Property.findByIdAndUpdate({_id:id},{$set:{status:'Rejected'}}).populate("subAdminId")
@@ -95,11 +93,12 @@ const rejectMail = async(req, res) => {
   
    
   } catch (error) {
-    return res.status(500).json({ message: 'Internal Server Error' }); 
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
-const fetchDash = async(req, res) => {
+const fetchDash = async(req, res, next) => {
   try {
      const userDataPromise =  User.find() 
      const propDataPromise = Property.find()
@@ -109,7 +108,8 @@ const fetchDash = async(req, res) => {
      return res.status(200).json({userData:userData.length, propData:propData.length, propOwners:propOwners.length})
     
   } catch (error) {
-    return res.status(500).json({ message: 'Internal Server Error' }); 
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 

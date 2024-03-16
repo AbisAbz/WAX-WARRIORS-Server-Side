@@ -1,13 +1,13 @@
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const sendEmail = require('../../Utils/NodeMailer');
 const TokenModel = require('../../Models/TokenModel');
 const User = require('../../Models/UserModel');
 const { SecurePassword } = require('../../Utils/SecurePassword');
-const jwt = require('jsonwebtoken')
-const bcrypt  = require('bcrypt')
 
 
-const userRegistration = async (req, res) => {
+const userRegistration = async (req, res, next) => {
 
   try {
     const userDetails = req.body;
@@ -45,17 +45,17 @@ const userRegistration = async (req, res) => {
         return res.status(200).json({ message: 'An email send to your account verify' })
 
       }
-      else console.log("registration failed");
+      else res.status(400).json({ message: 'registration failed' })
     }
 
   } catch (error) {
-    console.log(error); 
-    return res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 
 }
 
-const verifyUser = async (req, res) => {
+const verifyUser = async (req, res, next) => {
   try {
 
     const verifyEmail = await User.findOne({ _id: req.params.id });
@@ -84,22 +84,20 @@ const verifyUser = async (req, res) => {
         if (result.deletedCount > 0) {
           return res.status(200).json({ userToken, userData, message: 'Successfully Registered your Account' });
         } else {
-          console.log("Not deleted the token of the user");
           return res.status(500).json({ message: 'Internal Server Error' });
         }
       } else {
-        console.log("Not updated the verify in the user");
         return res.status(500).json({ message: 'Internal Server Error' });
       }
     }
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 
-const userLogin = async (req, res) => {
+const userLogin = async (req, res, next) => {
   try {
 
     const { email, password } = req.body;
@@ -128,13 +126,13 @@ const userLogin = async (req, res) => {
     }
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
 
-const googleSignUp = async(req,res) => {
+const googleSignUp = async(req,res, next) => {
   try {
 
       const {email, name, id} = req.body; 
@@ -150,7 +148,6 @@ const googleSignUp = async(req,res) => {
         })
 
         const userData = await newUser.save();
-        console.log("iam the userData", userData);
         
         if(userData){
 
@@ -167,13 +164,13 @@ const googleSignUp = async(req,res) => {
       }
     
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
     
   }
 }
 
-const googlelogin = async(req, res) => {
+const googlelogin = async(req, res, next) => {
   try {
     const {email}  = req.body
     const exist = await User.findOne({email:email})
@@ -195,8 +192,8 @@ const googlelogin = async(req, res) => {
     }
 
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    next(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
 

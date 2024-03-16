@@ -5,7 +5,7 @@ const booking = require('../Models/BookingModel');
 const moment = require('moment-timezone');
 const { uploadToCloudinary, multiUploadCloudinary } = require('../Utils/Cloudinary')
 
-const RegProperty = async (req, res) => {
+const RegProperty = async (req, res, next) => {
     try {
         const propData = req.body
         const img = req.files
@@ -29,38 +29,37 @@ const RegProperty = async (req, res) => {
         const propsvg = await newProperty.save();
         if(!propsvg) return res.status(400).json({ message:'Something went wrong'});
         else return res.status(200).json({message:'Your Property has been created', propsvg})
-
-
-
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 
-const fetchProperty = async (req, res) => {
+const fetchProperty = async (req, res, next) => {
     try {
         const { id } = req.body
         const data = await Property.find({ subAdminId: id });
-        if (!data) console.log("no data in this id");
-        else return res.status(200).json({ data })
+         return res.status(200).json({ data })
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const fetchDetailsViewpge = async (req, res) => {
+const fetchDetailsViewpge = async (req, res, next) => {
     try {
         const { id } = req.body
         const data = await Property.findById({ _id: id })
         if (!data) return res.status(400).json({ message: 'Something went wrong' });
         else return res.status(200).json({ data })
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const postServiceData = async (req, res) => {
+const postServiceData = async (req, res, next) => {
     try {
         const serviceData = req.body
         const newService = new Service({
@@ -74,31 +73,34 @@ const postServiceData = async (req, res) => {
         if (!saveService) return res.status(400).json({ message: 'Something went wrong' });
         else return res.status(200).json({ message: 'Your Property has been created', saveService })
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const fetchAllServicesData = async (req, res) => {
+const fetchAllServicesData = async (req, res, next) => {
     try {
         const { id } = req.body
         const data = await Service.find({propertyId:id})
         if (!data) return res.status(400).json({ message: 'No service Data' });
         else return res.status(200).json({ data });
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const fetchAllProperty = async(req, res) => {
+const fetchAllProperty = async(req, res, next) => {
     try {
         const data  = await Property.find();
         return res.status(200).json({ data });
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const editPropDetails = async(req, res) => {
+const editPropDetails = async(req, res, next) => {
     try {
         const prodData = req.body
         const updateProp = await Property.updateOne({_id:prodData.propId}, {$set:{
@@ -119,11 +121,12 @@ const editPropDetails = async(req, res) => {
         }
         
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const hidePropertyCntrl = async(req, res) => {
+const hidePropertyCntrl = async(req, res, next) => {
     try {
         const {id} = req.body
         const propData = await Property.findById({_id:id})
@@ -140,22 +143,24 @@ const hidePropertyCntrl = async(req, res) => {
         }
         
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
 
-const fetchAllBookings = async(req, res) => {
+const fetchAllBookings = async(req, res, next) => {
     try {
         const { id } = req.body
         const data = await booking.find({ subAdminId: id }).populate("subAdminId").populate("propertyId").populate("UsersId")
             return res.status(200).json({data})
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
-const fetchAllDataDash = async (req, res) => {
+const fetchAllDataDash = async (req, res, next) => {
     try {
         const { id } = req.body
         const data = await booking.find({ subAdminId: id })
@@ -171,8 +176,6 @@ const fetchAllDataDash = async (req, res) => {
             const totalRevenueByMonth = months.map(month => {
                 const adjustedMonth = month > 12 ? month - 12 : month;
                 const adjustedYear = month > 12 ? currentYear + 1 : currentYear;
-                console.log("iam month adjustedMonth..", adjustedMonth);
-                console.log("iam month adjustedYear..", adjustedYear);
 
                 const monthDate = moment.tz({ year: adjustedYear, month: adjustedMonth - 1, date: 1 }, 'Asia/Kolkata');
                 const monthName = monthDate.format('MMMM');
@@ -189,10 +192,7 @@ const fetchAllDataDash = async (req, res) => {
                     
                 return { month: monthName, year: adjustedYear, revenue: monthlyReve };
 
-            });
-            
-           
-          console.log("jiiljiljiljiljil ", totalRevenueByMonth);
+            })
 
             const totalSales = data
                 .filter(booking => {
@@ -205,7 +205,8 @@ const fetchAllDataDash = async (req, res) => {
 
         }
     } catch (error) {
-        console.log(error);
+        next(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
