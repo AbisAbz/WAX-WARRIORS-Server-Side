@@ -13,7 +13,7 @@ const propertyRoute = require('./Routes/PropertyRoutes')
 require('dotenv').config();
 env.config();
 
-mongoose.connect('mongodb://127.0.0.1:27017/MrWash');
+mongoose.connect(process.env.mongodb);
 
 // Use middleware to parse JSON and form data
 app.use(express.json({limit:'10mb'}));
