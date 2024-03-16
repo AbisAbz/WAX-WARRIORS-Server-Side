@@ -32,4 +32,7 @@ app.use('/', userRouter);
 app.use('/admin', adminRoute)
 app.use('/property', propertyRoute)
 
-app.listen(process.env.PORT, () => console.log(`Server is running at ${process.env.PORT}`));
+const port = process.env.port || 3000;
+const server = app.listen(port, () => {
+  console.log(`server is running ${port}`);
+});
